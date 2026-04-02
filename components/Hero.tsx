@@ -53,14 +53,6 @@ export default function Hero() {
 
       {/* Content */}
       <div className="relative z-10 text-center max-w-4xl mx-auto">
-        {/* Club tag */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-green-500/30 bg-green-500/5 mb-6">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-          <span className="font-mono text-xs text-green-400 tracking-wider uppercase">
-            Product Engineering &amp; Innovation Club · REVA University
-          </span>
-        </div>
-
         {/* Main headline */}
         <h1 className="text-6xl sm:text-7xl md:text-8xl font-bold tracking-tight mb-4">
           <span className="font-mono text-green-400">.Dev</span>
@@ -80,7 +72,7 @@ export default function Hero() {
         </p>
 
         {/* CTA buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
           <Link
             href="/join"
             className="px-8 py-3 bg-green-500 text-black font-mono font-semibold rounded hover:bg-green-400 transition-all duration-200 hover:shadow-glow-green"
@@ -95,10 +87,12 @@ export default function Hero() {
           </Link>
         </div>
 
-        {/* Scroll hint */}
-        <div className="mt-16 flex flex-col items-center gap-2 text-gray-700">
-          <span className="font-mono text-xs">scroll</span>
-          <div className="w-px h-10 bg-gradient-to-b from-green-500/40 to-transparent" />
+        {/* Club tag */}
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-green-500/20 bg-green-500/5">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-500/60" />
+          <span className="font-mono text-xs text-green-600 tracking-wider uppercase">
+            Product Engineering &amp; Innovation Club · REVA University
+          </span>
         </div>
       </div>
     </section>

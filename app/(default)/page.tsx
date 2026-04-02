@@ -1,6 +1,8 @@
 import Hero from "@/components/Hero";
 import About from "@/components/About";
 import StatsBar from "@/components/StatsBar";
+import GalleryPreview from "@/components/GalleryPreview";
+import TeamPreview from "@/components/TeamPreview";
 import Link from "next/link";
 
 export default function HomePage() {
@@ -9,6 +11,8 @@ export default function HomePage() {
       <Hero />
       <StatsBar />
       <About />
+      <GalleryPreview />
+      <TeamPreview />
 
       {/* CTA banner */}
       <section className="py-24 px-5 sm:px-8">
