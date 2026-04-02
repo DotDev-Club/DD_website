@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Calendar, MapPin } from "lucide-react";
-import { IEvent } from "@/models/Event";
 
 const typeColors: Record<string, string> = {
   Hackathon: "bg-purple-500/15 text-purple-400 border-purple-500/30",
@@ -17,7 +16,7 @@ const statusDot: Record<string, string> = {
 };
 
 interface Props {
-  event: Partial<IEvent> & {
+  event: {
     id: string;
     title: string;
     date: string;

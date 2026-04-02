@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { Calendar, Clock, User, BookOpen } from "lucide-react";
-import { IWorkshop } from "@/models/Workshop";
-
 interface Props {
-  workshop: Partial<IWorkshop> & {
+  workshop: {
     id: string;
     title: string;
     facilitator: string;

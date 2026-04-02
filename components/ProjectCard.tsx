@@ -1,8 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Github, ExternalLink } from "lucide-react";
-import { IProject } from "@/models/Project";
-
 const domainColors: Record<string, string> = {
   Web: "bg-blue-500/10 text-blue-400 border-blue-500/25",
   Mobile: "bg-purple-500/10 text-purple-400 border-purple-500/25",
@@ -12,7 +10,7 @@ const domainColors: Record<string, string> = {
 };
 
 interface Props {
-  project: Partial<IProject> & {
+  project: {
     id: string;
     name: string;
     description: string;

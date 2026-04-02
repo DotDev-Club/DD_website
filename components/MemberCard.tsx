@@ -1,10 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Github, Linkedin } from "lucide-react";
-import { IMember } from "@/models/Member";
-
 interface Props {
-  member: Partial<IMember> & {
+  member: {
     id: string;
     name: string;
     role: string;
