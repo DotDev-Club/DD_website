@@ -38,7 +38,7 @@ export default function Footer() {
             <h3 className="font-mono text-xs text-green-500 uppercase tracking-wider mb-4">
               // navigation
             </h3>
-            <ul className="space-y-2">
+            <ul className="grid grid-cols-2 gap-x-8 gap-y-2 max-w-sm">
               {footerLinks.map((link) => (
                 <li key={link.href}>
                   <Link
@@ -57,7 +57,7 @@ export default function Footer() {
             <h3 className="font-mono text-xs text-green-500 uppercase tracking-wider mb-4">
               // connect
             </h3>
-            <div className="flex gap-4">
+            <div className="flex gap-4 mb-4">
               {socials.map(({ icon: Icon, href, label }) => (
                 <a
                   key={label}
@@ -70,6 +70,20 @@ export default function Footer() {
                   <Icon size={16} />
                 </a>
               ))}
+            </div>
+            <div className="space-y-2">
+              <a
+                href="mailto:dotdevclub@gmail.com"
+                className="block text-sm text-gray-500 hover:text-white transition-colors"
+              >
+                dotdevclub@gmail.com
+              </a>
+              <a
+                href="tel:8217803545"
+                className="block text-sm text-gray-500 hover:text-white transition-colors"
+              >
+                +91 8217803545
+              </a>
             </div>
           </div>
         </div>

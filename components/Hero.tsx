@@ -55,7 +55,12 @@ export default function Hero() {
       <div className="relative z-10 text-center max-w-4xl mx-auto">
         {/* Main headline */}
         <h1 className="text-6xl sm:text-7xl md:text-8xl font-bold tracking-tight mb-4">
-          <span className="font-mono text-green-400">.Dev</span>
+          <span className="font-mono">
+            <span className="text-green-400">.</span>
+            <span className="text-white">Dev</span>
+            
+            
+          </span>
         </h1>
 
         {/* Typewriter subtitle */}
