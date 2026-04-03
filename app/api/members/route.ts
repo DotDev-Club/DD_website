@@ -5,8 +5,8 @@ import MemberModel from "@/models/Member";
 import { requireAuth } from "@/lib/requireAuth";
 
 export async function GET() {
-  await connectMongoDB();
   try {
+    await connectMongoDB();
     const members = await MemberModel.find().sort({ category: 1, name: 1 });
     return NextResponse.json({ members }, { status: 200 });
   } catch (error) {

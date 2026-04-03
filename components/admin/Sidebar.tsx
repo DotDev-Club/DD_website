@@ -11,6 +11,7 @@ import {
   FileText,
   ImageIcon,
   RefreshCw,
+  ShieldCheck,
   X,
 } from "lucide-react";
 
@@ -22,6 +23,7 @@ const navLinks = [
   { href: "/admin/applications", label: "Applications", icon: FileText },
   { href: "/admin/gallery",      label: "Gallery",      icon: ImageIcon },
   { href: "/admin/cycles",       label: "Cycles",       icon: RefreshCw },
+  { href: "/admin/admins",       label: "Admins",       icon: ShieldCheck },
 ];
 
 interface SidebarProps {

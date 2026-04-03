@@ -14,12 +14,14 @@ async function connectMongoDB(): Promise<void> {
     return;
   }
   try {
-    const db = await mongoose.connect(MONGODB_URI || "");
+    const db = await mongoose.connect(MONGODB_URI || "", {
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+    });
     connection.isConnected = db.connections[0].readyState;
     console.log("db connected successfully");
   } catch (error) {
-    console.log("database connection failed", error);
-    process.exit(0);
+    console.error("database connection failed", error);
   }
 }
 

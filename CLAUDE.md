@@ -4,7 +4,58 @@
 > **University:** REVA University, Bengaluru
 > **Tagline:** Build. Ship. Innovate.
 > **Repo:** https://github.com/DotDev-Club/DD_website
-> **Stack:** Next.js 14 · TypeScript · Tailwind CSS · MongoDB/Mongoose · Cloudinary · Upstash Redis · Netlify
+> **Stack:** Next.js 14 · TypeScript · Tailwind CSS · MongoDB/Mongoose · Cloudinary · Upstash Redis · Vercel
+
+---
+
+## Deployment (Vercel) — Current Setup
+
+- **Production URL:** https://dotdev-website.vercel.app
+- **Admin Panel:** https://dotdev-website.vercel.app/admin
+- **Vercel Project:** `dotdev-website` under `pranav-s-projects-2142d19d`
+- **Deploy command:** `vercel deploy --prod` (from project root, Vercel CLI must be logged in)
+- **Force rebuild:** `vercel deploy --prod --force`
+
+### Infrastructure
+| Service | Details |
+|---|---|
+| MongoDB Atlas | Cluster0 · `cluster0.nievczh.mongodb.net` · DB: `dotdev` · User: `rajasaipranav0_db_user` |
+| Upstash Redis | `apt-cricket-91232.upstash.io` (REST API) |
+| Gmail SMTP | `rajasaipranav0@gmail.com` · App Password set |
+| Cloudinary | Placeholders set — update with real credentials if image upload fails |
+
+### All Vercel Environment Variables (set for Production)
+```
+NEXT_PUBLIC_MONGODB_URI        — MongoDB Atlas connection string (dotdev DB)
+JWT_SECRET                     — Random 64-char hex (generated, secure)
+SESSION_SECRET                 — Random 64-char hex (generated, secure)
+NEXT_PUBLIC_DOMAIN             — https://dotdev-website.vercel.app
+ADMIN_EMAILS                   — rajasaipranav0@gmail.com
+MAIL_SMTP                      — smtp.gmail.com
+MAIL_SMTP_PORT                 — 465
+MAIL_USER                      — rajasaipranav0@gmail.com
+MAIL_PASS                      — Gmail App Password (set)
+UPSTASH_REDIS_REST_URL         — https://apt-cricket-91232.upstash.io
+UPSTASH_REDIS_REST_TOKEN       — set
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME — update with real value
+NEXT_PUBLIC_CLOUDINARY_API_KEY    — update with real value
+NEXT_PUBLIC_CLOUDINARY_API_SECRET — update with real value
+```
+
+### To update an env var
+```bash
+vercel env rm VAR_NAME production --yes
+vercel env add VAR_NAME production --value "new-value" --yes
+vercel deploy --prod
+```
+
+### Admin login flow
+1. Go to https://dotdev-website.vercel.app/admin
+2. Enter `rajasaipranav0@gmail.com`
+3. Check Gmail inbox for magic link (expires 15 min)
+4. Click link → redirected to `/admin/dashboard`
+
+> **Note:** Cloudinary env vars still have placeholder values — image uploads in admin will fail until real Cloudinary credentials are added.
 
 ---
 

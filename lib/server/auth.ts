@@ -1,16 +1,29 @@
 "use server";
 
-import { createTransport } from "nodemailer";
+import { Resend } from "resend";
 import { redis } from "@/lib/redis";
 import jwt from "jsonwebtoken";
+import connectMongoDB from "@/lib/dbConnect";
+import AdminUserModel from "@/models/AdminUser";
 
 export type JwtPayload = {
   email: string;
   role: "admin";
 };
 
-/** Check if the email is in the ADMIN_EMAILS env variable (comma-separated). */
-function isAllowedEmail(email: string): boolean {
+/** Check if the email is allowed: first try MongoDB, fall back to env var. */
+async function isAllowedEmail(email: string): Promise<boolean> {
+  try {
+    await connectMongoDB();
+    const count = await AdminUserModel.countDocuments();
+    if (count > 0) {
+      const found = await AdminUserModel.findOne({ email: email.toLowerCase().trim() });
+      return !!found;
+    }
+  } catch {
+    // fall through to env var
+  }
+  // Fallback: env var
   const allowed = (process.env.ADMIN_EMAILS ?? "")
     .split(",")
     .map((e) => e.trim().toLowerCase())
@@ -20,7 +33,7 @@ function isAllowedEmail(email: string): boolean {
 
 /** Send a 15-minute magic link to the given email if it is whitelisted. */
 export async function sendVerificationEmail(to: string): Promise<boolean> {
-  if (!isAllowedEmail(to)) return false;
+  if (!(await isAllowedEmail(to))) return false;
 
   const token = jwt.sign(
     { email: to },
@@ -36,21 +49,10 @@ export async function sendVerificationEmail(to: string): Promise<boolean> {
   await redis.set(`admin_login_${to}`, token, { ex: 15 * 60 });
 
   try {
-    const transporter = createTransport({
-      host: process.env.MAIL_SMTP,
-      pool: true,
-      port: parseInt((process.env.MAIL_SMTP_PORT || "465") as string),
-      secure: true,
-      auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
-      },
-      tls: { rejectUnauthorized: false },
-    });
-
-    await transporter.sendMail({
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({
+      from: ".Dev Admin <onboarding@resend.dev>",
       to,
-      from: `.Dev Admin <${process.env.MAIL_USER}>`,
       subject: ".Dev — Admin Login Link",
       html: `
         <div style="font-family:monospace;background:#0a0a0a;color:#fff;padding:32px;border-radius:8px;max-width:480px">
@@ -66,7 +68,6 @@ export async function sendVerificationEmail(to: string): Promise<boolean> {
     });
   } catch (error) {
     console.error("Error sending magic link email:", error);
-    // Still return true — token is in Redis, failure is only email delivery
   }
 
   return true;

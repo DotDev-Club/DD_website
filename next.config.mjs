@@ -4,9 +4,8 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "**" },
     ],
-    domains: ["res.cloudinary.com"],
   },
   async headers() {
     return [

@@ -9,12 +9,17 @@ export function middleware(request: NextRequest) {
 
   // ── Protect /admin/* ────────────────────────────────────────────────────────
   if (pathname.startsWith("/admin")) {
+    const token = request.cookies.get("admin_token")?.value;
     const isPublic = PUBLIC_ADMIN.some((p) => pathname === p || pathname.startsWith("/admin/login"));
-    if (!isPublic) {
-      const token = request.cookies.get("admin_token")?.value;
-      if (!token) {
-        return NextResponse.redirect(new URL("/admin", request.url));
-      }
+
+    // Already logged in — skip the sign-in page
+    if (isPublic && token) {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    }
+
+    // Not logged in — block protected routes
+    if (!isPublic && !token) {
+      return NextResponse.redirect(new URL("/admin", request.url));
     }
   }
 

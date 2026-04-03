@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
+import toast from "react-hot-toast";
 import { Upload, X, Loader2 } from "lucide-react";
 
 interface ImageUploadProps {
@@ -33,6 +34,7 @@ export default function ImageUpload({
       onChange(url);
     } catch (err) {
       console.error("Image upload error:", err);
+      toast.error("Image upload failed — Cloudinary not configured. Paste an image URL below instead.");
     } finally {
       setUploading(false);
     }
