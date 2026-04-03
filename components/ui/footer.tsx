@@ -95,6 +95,7 @@ export default function Footer() {
           <p className="font-mono text-xs text-gray-700">
             Built by{" "}
             <span className="text-green-600">.Dev</span>
+            <span className="text-gray-900 select-none ml-4">· press ` to open terminal</span>
           </p>
         </div>
       </div>

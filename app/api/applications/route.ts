@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import connectMongoDB from "@/lib/dbConnect";
 import ApplicationModel from "@/models/Application";
+import { createApplicationInNotion } from "@/lib/notion";
 
 export async function GET() {
   await connectMongoDB();
@@ -43,6 +44,10 @@ export async function POST(request: Request) {
     });
 
     await application.save();
+
+    // Mirror to Notion (non-blocking — don't fail the request if Notion is down)
+    createApplicationInNotion({ name, email, year, branch, whyJoin, skills }).catch(() => {});
+
     return NextResponse.json({ message: "Application submitted successfully" }, { status: 201 });
   } catch (error) {
     return NextResponse.json(

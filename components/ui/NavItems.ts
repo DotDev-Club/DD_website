@@ -9,6 +9,9 @@ const navItems: NavItem[] = [
   { label: "Events", href: "/events" },
   { label: "Projects", href: "/projects" },
   { label: "Workshops", href: "/workshops" },
+  { label: "Sprints", href: "/sprints" },
+  { label: "Open Source", href: "/open-source" },
+  { label: "Blog", href: "/blog" },
 ];
 
 export default navItems;
