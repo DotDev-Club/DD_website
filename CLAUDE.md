@@ -4,7 +4,7 @@
 > **University:** REVA University, Bengaluru
 > **Tagline:** Build. Ship. Innovate.
 > **Repo:** https://github.com/DotDev-Club/DD_website
-> **Stack:** Next.js 14 · TypeScript · Tailwind CSS · MongoDB/Mongoose · Cloudinary · Upstash Redis · Vercel
+> **Stack:** Next.js 14 · TypeScript · Tailwind CSS · MongoDB/Mongoose · Cloudinary · Upstash Redis · Notion · Brevo · Vercel
 
 ---
 
@@ -21,8 +21,9 @@
 |---|---|
 | MongoDB Atlas | Cluster0 · `cluster0.nievczh.mongodb.net` · DB: `dotdev` · User: `rajasaipranav0_db_user` |
 | Upstash Redis | `apt-cricket-91232.upstash.io` (REST API) |
-| Gmail SMTP | `rajasaipranav0@gmail.com` · App Password set |
-| Cloudinary | Placeholders set — update with real credentials if image upload fails |
+| Brevo | Transactional email API · `rajasaipranav0@gmail.com` verified sender · replaces Gmail SMTP (Vercel blocks all outbound SMTP ports) |
+| Cloudinary | Cloud name: `dxkw1cs7v` · credentials set in Vercel |
+| Notion | Integration: `.Dev` · API key set · databases connected (see Notion section below) |
 
 ### All Vercel Environment Variables (set for Production)
 ```
@@ -37,9 +38,18 @@ MAIL_USER                      — rajasaipranav0@gmail.com
 MAIL_PASS                      — Gmail App Password (set)
 UPSTASH_REDIS_REST_URL         — https://apt-cricket-91232.upstash.io
 UPSTASH_REDIS_REST_TOKEN       — set
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME — update with real value
-NEXT_PUBLIC_CLOUDINARY_API_KEY    — update with real value
-NEXT_PUBLIC_CLOUDINARY_API_SECRET — update with real value
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME — dxkw1cs7v (set)
+NEXT_PUBLIC_CLOUDINARY_API_KEY    — set
+NEXT_PUBLIC_CLOUDINARY_API_SECRET — set (server-only var: CLOUDINARY_API_SECRET)
+BREVO_API_KEY                  — set · used for magic link emails (replaces Resend + Gmail SMTP)
+NOTION_API_KEY                 — set · .Dev integration token
+NOTION_BLOG_DB                 — set
+NOTION_CYCLES_DB               — set · Product Cycles DB
+NOTION_EVENTS_DB               — set
+NOTION_APPS_DB                 — set · Join Applications DB
+NOTION_PARTNERS_DB             — set
+RESEND_API_KEY                 — set but NOT used (replaced by Brevo)
+MAIL_SMTP / MAIL_SMTP_PORT / MAIL_USER / MAIL_PASS — set but NOT used (Vercel blocks SMTP)
 ```
 
 ### To update an env var
@@ -51,11 +61,88 @@ vercel deploy --prod
 
 ### Admin login flow
 1. Go to https://dotdev-website.vercel.app/admin
-2. Enter `rajasaipranav0@gmail.com`
-3. Check Gmail inbox for magic link (expires 15 min)
+2. Enter your admin email
+3. Check inbox for magic link sent **from `rajasaipranav0@gmail.com` via Brevo** (expires 15 min)
 4. Click link → redirected to `/admin/dashboard`
 
-> **Note:** Cloudinary env vars still have placeholder values — image uploads in admin will fail until real Cloudinary credentials are added.
+---
+
+## Email System (Brevo)
+
+**Why Brevo:** Vercel serverless functions block all outbound SMTP ports (25, 465, 587). Resend (`onboarding@resend.dev`) only delivers to the Resend account owner's email. Brevo uses HTTPS REST API (port 443) and can send to any recipient.
+
+- **Provider:** Brevo (formerly Sendinblue) — 300 free emails/day
+- **Sender:** `rajasaipranav0@gmail.com` (verified in Brevo dashboard)
+- **API key env var:** `BREVO_API_KEY`
+- **Code:** `lib/server/auth.ts` — uses `fetch` to `https://api.brevo.com/v3/smtp/email`
+- **Do NOT switch back to nodemailer/SMTP** — it will never work on Vercel
+
+If `BREVO_API_KEY` expires or needs rotation:
+1. Go to brevo.com → SMTP & API → API Keys
+2. Create new key
+3. `vercel env add BREVO_API_KEY production --value "new-key" --yes && vercel deploy --prod`
+
+---
+
+## Notion Integration
+
+The Notion `.Dev` integration is connected to these databases. **Property names in `lib/notion.ts` must match Notion column names exactly** — mismatches silently return empty arrays.
+
+### Product Cycles (`NOTION_CYCLES_DB`)
+Actual Notion column names (what the code uses):
+| Code field | Notion column | Type |
+|---|---|---|
+| `name` | `Cycle Name` | title |
+| `description` | `Problem Brief` | rich_text |
+| `week` | `Current Week` | number |
+| `githubRepo` | `GitHub Repo` | url |
+| `startDate` | `Start Date` | date |
+| `endDate` | `End Date` | date |
+| `industryMentor` | `Industry Mentor` | rich_text |
+| `status` | `Status` | select |
+
+Note: `squad` and `outcome` fields exist in the `Cycle` interface but have **no Notion column** — they always return empty defaults when reading.
+
+### Join Applications (`NOTION_APPS_DB`)
+Actual Notion column names:
+| Code field | Notion column | Type |
+|---|---|---|
+| `name` | `Applicant Name` | title |
+| `email` | `Email` | email |
+| `year` | `Year` | **select** (options: 1st/2nd/3rd/4th Year) |
+| `branch` | `Branch` | **select** (options: CSE, ECE, AIML, Other — auto-creates new) |
+| `whyJoin` | `Why Join` | rich_text |
+| `skills` | `Skills` | rich_text |
+| `status` | `Status` | select |
+| `submittedAt` | `Applied On` | date |
+
+Applications are saved to **MongoDB first**, then synced to Notion non-blocking. If Notion sync fails, the application is still in MongoDB (visible in `/admin/applications`).
+
+### Backfill script
+If applications submitted before the Notion integration was fixed need to be synced:
+```bash
+npx tsx scripts/sync-apps-to-notion.ts
+```
+
+### Cycles are Notion-only
+The `/api/cycles` route reads and writes **exclusively to Notion** — there is no MongoDB collection for cycles.
+
+---
+
+## Super Admin System
+
+`rajasaipranav0@gmail.com` is the **permanent super admin**. This is enforced at the API level in `app/api/admins/route.ts`.
+
+### Rules
+- Super admin **cannot be deleted** — the DELETE route returns 403 if you try
+- Only super admin can **add or remove** other admins
+- Regular admins can log in and manage all content (events, projects, members, etc.) but cannot touch the admins list
+- The env var `SUPER_ADMIN_EMAIL` overrides the default if ever needed
+
+### UI behaviour (`/admin/admins`)
+- Super admin entry shows a **crown icon** + `super admin` badge
+- "Add Admin" form is **only visible** when logged in as super admin
+- Trash icons are **only visible** to super admin, and only on non-super entries
 
 ---
 
@@ -90,7 +177,8 @@ npm run dev
 | Database | MongoDB via Mongoose | Hosted on MongoDB Atlas |
 | Media | Cloudinary | All images uploaded via `/api/upload` |
 | Auth | JWT magic-link + Upstash Redis | Passwordless, one-time-use links |
-| Email | Nodemailer (Gmail SMTP) | Sends magic link emails |
+| Email | Brevo REST API | Sends magic link emails — replaces Nodemailer/SMTP (Vercel blocks SMTP) |
+| Notion | @notionhq/client | Product Cycles (source of truth) + Join Applications mirror |
 | Forms | react-hook-form | All public + admin forms |
 | Toast | react-hot-toast | Notifications across all pages |
 | Icons | lucide-react | Consistent icon set |

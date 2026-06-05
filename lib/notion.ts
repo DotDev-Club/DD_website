@@ -172,10 +172,9 @@ export async function getPageBlocks(pageId: string): Promise<NotionBlock[]> {
 }
 
 // ── Product Cycles ────────────────────────────────────────────────────────────
-// Property names must match your Notion database columns exactly.
-// Expected columns: Name (title), Description (rich_text), Week (number),
-// Squad (multi_select), GitHubRepo (url), StartDate (date), EndDate (date),
-// IndustryMentor (rich_text), Status (select), Outcome (rich_text)
+// Notion DB columns: Cycle Name (title), Problem Brief (rich_text),
+// Current Week (number), GitHub Repo (url), Start Date (date), End Date (date),
+// Industry Mentor (rich_text), Status (select), Domain (select)
 
 export interface Cycle {
   id: string; // Notion page ID
@@ -195,16 +194,16 @@ function mapCyclePage(page: PageObjectResponse): Cycle {
   const p = page.properties as AnyProp;
   return {
     id: page.id,
-    name: propTitle(p.Name),
-    description: propRichText(p.Description),
-    week: propNumber(p.Week),
-    squad: propMultiSelect(p.Squad),
-    githubRepo: propUrl(p.GitHubRepo),
-    startDate: propDate(p.StartDate),
-    endDate: propDate(p.EndDate),
-    industryMentor: propRichText(p.IndustryMentor),
+    name: propTitle(p["Cycle Name"]),
+    description: propRichText(p["Problem Brief"]),
+    week: propNumber(p["Current Week"]),
+    squad: [],
+    githubRepo: propUrl(p["GitHub Repo"]),
+    startDate: propDate(p["Start Date"]),
+    endDate: propDate(p["End Date"]),
+    industryMentor: propRichText(p["Industry Mentor"]),
     status: propSelect(p.Status),
-    outcome: propRichText(p.Outcome),
+    outcome: "",
   };
 }
 
@@ -212,7 +211,7 @@ export async function getCycles(): Promise<Cycle[]> {
   try {
     const res = await notion.databases.query({
       database_id: NOTION_DB.cycles,
-      sorts: [{ property: "StartDate", direction: "descending" }],
+      sorts: [{ property: "Start Date", direction: "descending" }],
     });
     return res.results
       .filter((p): p is PageObjectResponse => "properties" in p)
@@ -226,25 +225,21 @@ export async function getCycles(): Promise<Cycle[]> {
 function buildCycleProperties(data: Partial<Omit<Cycle, "id">>): Record<string, any> {
   const props: Record<string, unknown> = {};
   if (data.name !== undefined)
-    props.Name = { title: [{ text: { content: data.name } }] };
+    props["Cycle Name"] = { title: [{ text: { content: data.name } }] };
   if (data.description !== undefined)
-    props.Description = { rich_text: [{ text: { content: data.description } }] };
+    props["Problem Brief"] = { rich_text: [{ text: { content: data.description } }] };
   if (data.week !== undefined)
-    props.Week = { number: data.week };
-  if (data.squad !== undefined)
-    props.Squad = { multi_select: data.squad.map(s => ({ name: s })) };
+    props["Current Week"] = { number: data.week };
   if (data.githubRepo !== undefined)
-    props.GitHubRepo = { url: data.githubRepo || null };
+    props["GitHub Repo"] = { url: data.githubRepo || null };
   if (data.startDate !== undefined)
-    props.StartDate = data.startDate ? { date: { start: data.startDate } } : { date: null };
+    props["Start Date"] = data.startDate ? { date: { start: data.startDate } } : { date: null };
   if (data.endDate !== undefined)
-    props.EndDate = data.endDate ? { date: { start: data.endDate } } : { date: null };
+    props["End Date"] = data.endDate ? { date: { start: data.endDate } } : { date: null };
   if (data.industryMentor !== undefined)
-    props.IndustryMentor = { rich_text: [{ text: { content: data.industryMentor } }] };
+    props["Industry Mentor"] = { rich_text: [{ text: { content: data.industryMentor } }] };
   if (data.status !== undefined)
     props.Status = { select: { name: data.status } };
-  if (data.outcome !== undefined)
-    props.Outcome = { rich_text: [{ text: { content: data.outcome } }] };
   return props;
 }
 
@@ -269,9 +264,9 @@ export async function archiveCycle(pageId: string): Promise<void> {
 }
 
 // ── Join Applications ─────────────────────────────────────────────────────────
-// Expected columns: Name (title), Email (email), Year (rich_text),
-// Branch (rich_text), WhyJoin (rich_text), Skills (rich_text),
-// Status (select), SubmittedAt (date)
+// Notion DB columns: Applicant Name (title), Email (email), Year (select),
+// Branch (select), Why Join (rich_text), Skills (rich_text),
+// Status (select), Applied On (date)
 
 export async function createApplicationInNotion(data: {
   name: string;
@@ -284,14 +279,14 @@ export async function createApplicationInNotion(data: {
   await notion.pages.create({
     parent: { database_id: NOTION_DB.joinApps },
     properties: {
-      Name:        { title: [{ text: { content: data.name } }] },
-      Email:       { email: data.email },
-      Year:        { rich_text: [{ text: { content: data.year } }] },
-      Branch:      { rich_text: [{ text: { content: data.branch } }] },
-      WhyJoin:     { rich_text: [{ text: { content: data.whyJoin } }] },
-      Skills:      { rich_text: [{ text: { content: data.skills } }] },
-      Status:      { select: { name: "pending" } },
-      SubmittedAt: { date: { start: new Date().toISOString().split("T")[0] } },
+      "Applicant Name": { title: [{ text: { content: data.name } }] },
+      Email:            { email: data.email },
+      Year:             { select: { name: data.year } },
+      Branch:           { select: { name: data.branch } },
+      "Why Join":       { rich_text: [{ text: { content: data.whyJoin } }] },
+      Skills:           { rich_text: [{ text: { content: data.skills } }] },
+      Status:           { select: { name: "pending" } },
+      "Applied On":     { date: { start: new Date().toISOString().split("T")[0] } },
     },
   });
 }

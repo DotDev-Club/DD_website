@@ -3,6 +3,8 @@ import connectMongoDB from "@/lib/dbConnect";
 import AdminUserModel from "@/models/AdminUser";
 import { requireAuth } from "@/lib/requireAuth";
 
+const SUPER_ADMIN = (process.env.SUPER_ADMIN_EMAIL ?? "rajasaipranav0@gmail.com").toLowerCase();
+
 /** Seed the DB with emails from ADMIN_EMAILS env var if collection is empty. */
 async function seedIfEmpty() {
   const count = await AdminUserModel.countDocuments();
@@ -27,8 +29,13 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { error } = await requireAuth();
+  const { error, user } = await requireAuth();
   if (error) return error;
+
+  // Only super admin can add new admins
+  if (user!.email.toLowerCase() !== SUPER_ADMIN) {
+    return NextResponse.json({ error: "Only the super admin can add admins" }, { status: 403 });
+  }
 
   const { email } = await req.json();
   if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
@@ -47,19 +54,24 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const { error } = await requireAuth();
+  const { error, user } = await requireAuth();
   if (error) return error;
+
+  // Only super admin can remove admins
+  if (user!.email.toLowerCase() !== SUPER_ADMIN) {
+    return NextResponse.json({ error: "Only the super admin can remove admins" }, { status: 403 });
+  }
 
   const { searchParams } = new URL(req.url);
   const email = searchParams.get("email");
   if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
 
-  await connectMongoDB();
-  const remaining = await AdminUserModel.countDocuments();
-  if (remaining <= 1) {
-    return NextResponse.json({ error: "Cannot remove the last admin" }, { status: 400 });
+  // Super admin can never be removed
+  if (email.toLowerCase() === SUPER_ADMIN) {
+    return NextResponse.json({ error: "Super admin cannot be removed" }, { status: 403 });
   }
 
+  await connectMongoDB();
   await AdminUserModel.deleteOne({ email: email.toLowerCase() });
   return NextResponse.json({ ok: true });
 }

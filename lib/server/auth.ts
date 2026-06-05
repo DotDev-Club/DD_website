@@ -1,6 +1,5 @@
 "use server";
 
-import { Resend } from "resend";
 import { redis } from "@/lib/redis";
 import jwt from "jsonwebtoken";
 import connectMongoDB from "@/lib/dbConnect";
@@ -48,13 +47,17 @@ export async function sendVerificationEmail(to: string): Promise<boolean> {
   // Store token in Redis so it can be invalidated after one use
   await redis.set(`admin_login_${to}`, token, { ex: 15 * 60 });
 
-  try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: ".Dev Admin <onboarding@resend.dev>",
-      to,
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": process.env.BREVO_API_KEY as string,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      sender: { name: ".Dev Admin", email: process.env.MAIL_USER },
+      to: [{ email: to }],
       subject: ".Dev — Admin Login Link",
-      html: `
+      htmlContent: `
         <div style="font-family:monospace;background:#0a0a0a;color:#fff;padding:32px;border-radius:8px;max-width:480px">
           <p style="color:#22c55e;font-size:20px;margin:0 0 16px">.Dev Admin</p>
           <p>Click the link below to sign in to the admin panel:</p>
@@ -64,10 +67,13 @@ export async function sendVerificationEmail(to: string): Promise<boolean> {
           </a>
           <p style="color:#666;font-size:12px">This link expires in 15 minutes. If you did not request this, ignore this email.</p>
         </div>`,
-      text: `Sign in to .Dev Admin Panel:\n\n${verificationLink}\n\nExpires in 15 minutes.`,
-    });
-  } catch (error) {
-    console.error("Error sending magic link email:", error);
+      textContent: `Sign in to .Dev Admin Panel:\n\n${verificationLink}\n\nExpires in 15 minutes.`,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Brevo error ${res.status}: ${err}`);
   }
 
   return true;
